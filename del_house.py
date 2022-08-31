@@ -19,7 +19,7 @@ from linebot.models import TextSendMessage
 
 WIDTH = 800
 HIGHT = 400
-browse_dict = {'city':'縣市','area':'區域','houseaddress':'地址', 'lease':'出租中', 'leasebegins':"出租日", 'leaseends':'退租日', 'rent':'租金', 'deposit':'押金', 'discount':'折扣', "registrant":"招租人",'releasedate':'更新日期'}
+browse_dict = {'city':'縣市','area':'區域','houseaddress':'地址', 'lease':'出租中', 'leasebegins':"出租日", 'leaseends':'退租日', 'rent':'租金', 'deposit':'押金', 'discount':'折扣', "registrant":"招租人",'releasedate':'上傳日期'}
 updata_dict = {'houseaddress':'地址', 'rent':'租金', 'deposit':'押金', 'discount':'折扣',"registrant":"使用者代碼"}#我不希望招租人可以更改出租中的資料，到時候必須加入這個功能#'releasedate':'更新日期'
 browse_list = ['city','area','houseaddress', 'lease', 'leasebegins', 'leaseends', 'rent', 'deposit', 'discount', "registrant",'releasedate']#宣告也許要改成直接抓資料庫的名稱，不然更改會很麻煩，但我又不想全抓坑
 user_browse_dict = {'city':'縣市','area':'區域','houseaddress':'地址','rent':'租金', 'deposit':'押金',"registrant":"招租人"}
@@ -27,8 +27,8 @@ user_browse_list = ['city','area','houseaddress','rent', 'deposit',"registrant"]
 plot_name_dict = {"area":"區域","rent":"租金","registrant":"招租人"}
 user_info_list = ['姓名','方便聯絡時間','連絡電話','line']
 img_frame_list = ["image1","image2","image3"]
-line_bot_api = LineBotApi('')
-yourID = ''
+line_bot_api = LineBotApi('sa4sn5kT4cFjWMEvBws0+eHE3SyRtRi0j1frc4rJ2i8VxGqUsNV3FyvzhrMhA1KiA8pEvde42dtgYVZL9JFDxprADSOVvnqx0ZxcWMvgjUInNUJuuSG3mPTiM4jZwo3XxlxBp6a70D9qqRdptJhqUQdB04t89/1O/w1cDnyilFU=')
+yourID = 'U853e8aa3ab46f8c2ea3a2f3c482dd82b'
 taipei_dict = {"台北市":"台北市/?cid=0000",
 "中正區":"台北市_中正區/?cid=0000&aid=1",
 "大同區":"台北市_大同區/?cid=0000&aid=2",
@@ -285,10 +285,10 @@ def add_house():
     try:
         db_connect = mysql.connector.connect(host = "localhost",user = "root",password = "gr354517",db = "room_system")
         db_cursor = db_connect.cursor()
-        sql_house = f'''insert room_system.house (city,area,houseaddress,rent, deposit,discount,registrantID) values("{area.group(1)}","{area.group(2)}","{houseaddress_var.get()}",{rent_var.get()},{discount_var.get()},{deposit_var.get()},"{registrantID_var.get()}")'''
+        sql_house = f'''insert room_system.house (city,area,houseaddress,rent, deposit,discount,registrantID) values("{area.group(1)}","{area.group(2)}","{houseaddress_var.get()}",{rent_var.get()},{deposit_var.get()},{discount_var.get()},"{registrantID_var.get()}")'''
         db_cursor.execute(sql_house)
         db_connect.commit()
-        showinfo("上傳成功","請至(我的出租)查看")
+        showinfo("上傳成功","上傳成功")
         f5()
     except:
         showerror("上傳失敗","請聯絡技術人員")
@@ -396,12 +396,14 @@ def contact_registrant():
     phone = user_info_var_dict["連絡電話"].get()
     if user_name == "":
         messagebox.showwarning("使用提示","姓名不得為空")
+        return
     if len(phone) != 10:
         messagebox.showwarning("使用提示","連絡電話格式不符")
+        return
     db_connect = mysql.connector.connect(host = "localhost",user = "root",password = "gr354517",db = "room_system")
     db_cursor = db_connect.cursor()
     for select in selects:#從目標中提取個別的值
-        house_ID = int(browse_view.item(select,option="text"))#不指定option就會回傳一個字典
+        house_ID = int(user_browse_view.item(select,option="text"))#不指定option就會回傳一個字典
         sql = f"""select house.houseID,house.houseaddress,house.rent
         from house
         where house.houseID = {house_ID}"""
@@ -409,15 +411,7 @@ def contact_registrant():
             db_cursor.execute(sql)
             rows = db_cursor.fetchall()
             for houseID,houseaddress,rent in rows:
-                house_msg = f"""您的房屋有租客感興趣喔!
-                編號:{houseID}
-                地址:{houseaddress}
-                租金:{rent}
-
-                姓名:{user_name}
-                連絡電話:{phone}
-                line:{user_info_var_dict["line"].get()}
-                方便聯絡時間:{user_info_var_dict["方便聯絡時間"].get()}"""
+                house_msg = f"""您的房屋有租客感興趣喔!\n編號:{houseID}\n地址:{houseaddress}\n租金:{rent}\n\姓名:{user_name}\n連絡電話:{phone}\nline:{user_info_var_dict["line"].get()}\n方便聯絡時間:{user_info_var_dict["方便聯絡時間"].get()}"""
                 line_bot_api.push_message(yourID,TextSendMessage(text=house_msg))
                 print("成功")
         except Exception as e:
@@ -517,7 +511,7 @@ def upload_image():
 def choose_image(column):
     print(column)
     selects = browse_view.selection()
-    IMG_PATH = filedialog.askopenfilename()
+    IMG_PATH = filedialog.askopenfilename(filetypes=[("iamge file",(".jpg",".png",".gif",".jpeg")),("All files", ".*")])
     IMG_OBJ = open(IMG_PATH,mode="rb")
     IMG_blob = IMG_OBJ.read()
     IMG_base64 = base64.b64encode(IMG_blob)
@@ -602,7 +596,6 @@ def user_img_renew(event):
             db_cursor.execute(img_renew_sql)
             rows = db_cursor.fetchall()
             for data in rows:
-                print(len(data))
                 for i,j in zip(data,img_frame_list):
                     if type(i) == type(None):#
                         blank = Image.new("RGB",(50,50),(0,0,0))
@@ -615,39 +608,62 @@ def user_img_renew(event):
                     IMG_b = Image.open(io.BytesIO(IMG_b64))
                     IMG_s = small_img(IMG_b)
                     #IMG_s.show()#測試
-                    #IMG = ImageTk.PhotoImage(IMG_s)#不知道為甚麼圖片還是顯示不出來，理論上OK，別處測試也OK。
+                    #IMG = ImageTk.PhotoImage(IMG_s)#不知道為甚麼圖片還是顯示不出來，理論上OK，別處測試也OK
                     x = tk.Label(user_window)
                     x.photo = ImageTk.PhotoImage(IMG_s)#magic!!
                     img_lb_dict[j]["image"] = x.photo
                     print(j,"成功")
         except Exception as e:
             print(str(e))
-
-def revise_img_f5():#去死吧
-    selects = browse_view.selection()
-    try:
-        db_connect = mysql.connector.connect(host = "localhost",user = "root",password = "gr354517",db = "room_system")
-        db_cursor = db_connect.cursor()
-        for select in selects:#從目標中提取個別的值
-            house_ID = int(browse_view.item(select,option="text"))#不指定option就會回傳一個字典
-            IMG_sql = f"""SELECT IMG1,IMG2,IMG3
-            FROM room_system.house
-            where houseID = {house_ID}"""
-            sql = f"""SELECT IMG1
-            FROM room_system.house_test
-            where houseID = 2"""
-            db_cursor.execute(sql)
-            rows = db_cursor.fetchall()
-            for IMG1 in rows:
-                for i in IMG1:
-                    IMG = base64.b64decode(i)#這東西已經跟當初用二進位方式讀取的一樣了
-                    img = Image.open(io.BytesIO(IMG))
-                    x = ImageTk.PhotoImage(img)
-                    IMG1_btn["image"]=x
+def select_to_csv():
+    check_list = ""
+    for i in check_area_var_dict:
+        if check_area_var_dict[i].get() == True:
+            check_list = check_list + f"'{i}',"
+    check_list = check_list[0:-1]
+    db_connect = mysql.connector.connect(host = "localhost",user = "root",password = "gr354517",db = "room_system")
+    db_cursor = db_connect.cursor()
+    PATH = filedialog.asksaveasfile(defaultextension=".csv",filetypes=[("csv file",".csv"),("HTML file", ".html"),("All files", ".*")])
+    try:#house.city, house.area, house.houseaddress,house.rent, house.deposit, house.discount,registrant.Name
+        data_sql = f'''select house.city, house.area, house.houseaddress,house.rent, house.deposit, house.discount,registrant.Name
+        from house join registrant on house.registrantID = registrant.registrantID
+        where city = "台北市" and area in ({check_list})'''
+        db_cursor.execute(data_sql)
+        df = pd.DataFrame(db_cursor.fetchall(),columns=["city","area","houseaddress","rent","deposit","discount","Name"])
+        df.to_csv(PATH,encoding="big5",index=False,line_terminator="\n")
+        print("成功")
     except Exception as e:
         print(str(e))
-        print("失敗")
-
+def csv_import():
+    PATH = filedialog.askopenfilename(filetypes=[("file",".csv")])
+    if PATH == "":
+        print("沒有選擇檔案")
+    #PATHH = "C:\\Users\\王恩詠\\Documents\\自訂 Office 範本\\test2.csv"
+    df = pd.read_csv(PATH,encoding="big5")
+    df["deposit"] = df["deposit"].fillna(0)
+    df["discount"] = df["discount"].fillna(0)#這三個東西還好直接補0
+    df["Name"] = df["Name"].fillna(0)
+    df.info()
+    df_total = len(df)#df總數
+    df.info()
+    df_na = len(df)-len(df.dropna())#df缺失的數量，這些東西將不會上傳
+    df = df.dropna()
+    db_connect = mysql.connector.connect(host = "localhost",user = "root",password = "gr354517",db = "room_system")
+    db_cursor = db_connect.cursor()
+    succes_list = ""
+    #fail_list = []
+    try:
+        for i in df.itertuples():
+            import_sql = f"""insert room_system.house (city,area,houseaddress,rent, deposit,discount,registrantID) values("{i[1]}","{i[2]}","{i[3]}",{i[4]},{i[5]},{i[6]},"{registrantID_var.get()}")"""
+            succes_list += str(i[3])+"\n"
+            db_cursor.execute(import_sql)
+            db_connect.commit()
+            print(i[3],"成功")
+        showinfo("匯入紀錄",f"總共{df_total}\n成功:{succes_list}資料缺失:{df_na}")
+        print("成功")
+        f5()
+    except Exception as e:
+        print(str(e))
 
 
 window = tk.Tk()
@@ -661,7 +677,6 @@ revise_window = tk.Frame(container)
 Backstage_window = tk.Frame(container)
 user_window = tk.Frame(container)
 add_window = tk.Frame(container)
-
 
 frame_dict = {"revise_window":revise_window,"user_window":user_window,"add_window":add_window,"Backstage_window":Backstage_window}
 
@@ -705,6 +720,7 @@ browse_view.column("houseaddress",width=240,minwidth=50)
 browse_view.column("releasedate",width=120,minwidth=50)
 
 del_btn = tk.Button(revise_window,text="刪除",width=10,height=1,font=24,padx=3,pady=3,command=remove)
+csv_import_btn = tk.Button(revise_window,text="匯入",width=10,height=1,font=24,padx=3,pady=3,command=csv_import)
 upload_image_btn = tk.Button(revise_window,text="上傳圖片",width=10,height=1,font=24,padx=3,pady=3,command=upload_image)
 re_btn = tk.Button(revise_window,text="更新",width=10,height=1,font=24,padx=3,pady=3,command=update)#調整
 add_btn = tk.Button(revise_window,text="新增",width=10,height=1,font=24,padx=3,pady=3,command=add_house)
@@ -743,9 +759,10 @@ discount_entry.grid(row=4,column=3,pady=5)
 registrantID_entry.grid(row=4,column=4,pady=5)
 #releasedate_entry.grid(row=4,column=4,pady=5)
 del_btn.grid(row=5,column=0,sticky="W",padx=5,pady=5)#sticky="W"
+csv_import_btn.grid(row=5,column=1,sticky="E",padx=5,pady=5)
 upload_image_btn.grid(row=5,column=2,sticky="E",padx=5,pady=5)
 re_btn.grid(row=5,column=3,sticky="E",padx=5,pady=5)
-add_btn.grid(row=5,column=4,padx=5,pady=5)
+add_btn.grid(row=5,column=4,sticky="E",padx=5,pady=5)
 #-----------revise_window-----------
 
 #----------user_window-----------
@@ -835,8 +852,10 @@ for i,j in taipei_dict.items():
     if COUNT == 8:
         COUNT_X += 1
         COUNT = 0
+export_btn = tk.Button(Backstage_window,text="匯出",width=10,height=1,font=24,padx=3,pady=3,command=select_to_csv)
 #----------位置調整----------
 generate_btn.grid(row=0,column=0,sticky="W",padx=5,pady=5)
+export_btn.grid(row=9,column=5,sticky="W",padx=5,pady=5)
 #-----------Backstage_window-----------
 #----------位置調整----------
 container.grid(row=0,column=0)
