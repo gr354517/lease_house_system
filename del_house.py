@@ -27,8 +27,8 @@ user_browse_list = ['city','area','houseaddress','rent', 'deposit',"registrant"]
 plot_name_dict = {"area":"區域","rent":"租金","registrant":"招租人"}
 user_info_list = ['姓名','方便聯絡時間','連絡電話','line']
 img_frame_list = ["image1","image2","image3"]
-line_bot_api = LineBotApi('sa4sn5kT4cFjWMEvBws0+eHE3SyRtRi0j1frc4rJ2i8VxGqUsNV3FyvzhrMhA1KiA8pEvde42dtgYVZL9JFDxprADSOVvnqx0ZxcWMvgjUInNUJuuSG3mPTiM4jZwo3XxlxBp6a70D9qqRdptJhqUQdB04t89/1O/w1cDnyilFU=')
-yourID = 'U853e8aa3ab46f8c2ea3a2f3c482dd82b'
+line_bot_api = LineBotApi('你的TOKEN')
+yourID = '你的ID'
 taipei_dict = {"台北市":"台北市/?cid=0000",
 "中正區":"台北市_中正區/?cid=0000&aid=1",
 "大同區":"台北市_大同區/?cid=0000&aid=2",
